@@ -6,6 +6,7 @@ from .views import (
     AssessmentWeightsViewSet
 )
 
+# Standard DRF router
 router = DefaultRouter()
 router.register(r'users', UsersViewSet, basename='users')
 router.register(r'enrollments', EnrollmentsViewSet, basename='enrollments')
@@ -25,3 +26,5 @@ urlpatterns = [
     path('assessments_sa/<str:enrollment_id>/', AssessmentsSaViewSet.as_view({'get': 'list'})),
     path('assessment_weights/<str:enrollment_id>/', AssessmentWeightsViewSet.as_view({'get': 'list'})),
 ]
+
+
