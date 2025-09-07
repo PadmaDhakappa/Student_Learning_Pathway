@@ -15,24 +15,30 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
-from django.contrib import admin
 from django.urls import path, include
-from rest_framework.routers import SimpleRouter
-from api import views
-from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
+from rest_framework.routers import DefaultRouter
+from .views import (
+    UsersViewSet, EnrollmentsViewSet, SubjectsViewSet,
+    AssessmentsFaViewSet, AssessmentsEolViewSet, AssessmentsSaViewSet,
+    AssessmentWeightsViewSet
+)
 
-router = SimpleRouter()
-router.register(r'users', views.UsersViewSet, basename='users')
-router.register(r'enrollments', views.EnrollmentsViewSet, basename='enrollments')
-router.register(r'assessments_eol', views.AssessmentsEolViewSet, basename='assessments_eol')
-router.register(r'assessments_fa', views.AssessmentsFaViewSet, basename='assessments_fa')
-router.register(r'assessments_sa', views.AssessmentsSaViewSet, basename='assessments_sa')
-router.register(r'subjects', views.SubjectsViewSet, basename='subjects')
-router.register(r'assessment_weights', views.AssessmentWeightsViewSet, basename='assessment_weights')  # or 'asessment_weights' if that's your object
+router = DefaultRouter()
+router.register(r'users', UsersViewSet, basename='users')
+router.register(r'enrollments', EnrollmentsViewSet, basename='enrollments')
+router.register(r'subjects', SubjectsViewSet, basename='subjects')
+router.register(r'assessments_fa', AssessmentsFaViewSet, basename='assessments_fa')
+router.register(r'assessments_eol', AssessmentsEolViewSet, basename='assessments_eol')
+router.register(r'assessments_sa', AssessmentsSaViewSet, basename='assessments_sa')
+router.register(r'assessment_weights', AssessmentWeightsViewSet, basename='assessment_weights')
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),       # OpenAPI JSON
-    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema')),   # Swagger UI
-    path('api/', include(router.urls)),
+    path('', include(router.urls)),
+
+    # Enrollment-filtered routes
+    path('subjects/<str:enrollment_id>/', SubjectsViewSet.as_view({'get': 'list'})),
+    path('assessments_fa/<str:enrollment_id>/', AssessmentsFaViewSet.as_view({'get': 'list'})),
+    path('assessments_eol/<str:enrollment_id>/', AssessmentsEolViewSet.as_view({'get': 'list'})),
+    path('assessments_sa/<str:enrollment_id>/', AssessmentsSaViewSet.as_view({'get': 'list'})),
+    path('assessment_weights/<str:enrollment_id>/', AssessmentWeightsViewSet.as_view({'get': 'list'})),
 ]
