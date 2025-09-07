@@ -28,26 +28,32 @@ class UsersViewSet(ReadOnly):
 class EnrollmentsViewSet(ReadOnly):
     queryset = models.Enrollments.objects.all()
     serializer_class = EnrollmentsSerializer
-    lookup_field = "enrollment_id"    # make detail routes stable if you use them
+    lookup_field = "enrollment_id"    # stable detail routes
 
-# Composite-PK tables → list-only
-class AssessmentsFaViewSet(JSONListOnly):
+# Assessments (fetch all + individual by enrollment_id)
+class AssessmentsFaViewSet(ReadOnly):
     queryset = models.AssessmentsFa.objects.all()
     serializer_class = AssessmentsFaSerializer
+    lookup_field = "enrollment_id"
 
-class AssessmentsEolViewSet(JSONListOnly):
+class AssessmentsEolViewSet(ReadOnly):
     queryset = models.AssessmentsEol.objects.all()
     serializer_class = AssessmentsEolSerializer
+    lookup_field = "enrollment_id"
 
-class AssessmentsSaViewSet(JSONListOnly):
+class AssessmentsSaViewSet(ReadOnly):
     queryset = models.AssessmentsSa.objects.all()
     serializer_class = AssessmentsSaSerializer
+    lookup_field = "enrollment_id"
 
-class SubjectsViewSet(JSONListOnly):
+# Subjects (list + detail if single PK exists)
+class SubjectsViewSet(ReadOnly):
     queryset = models.Subjects.objects.all()
     serializer_class = SubjectsSerializer
+    lookup_field = "subject_id"   # adjust if your model has a different PK
 
-# If assessment_weights also has a composite PK, make it list-only; if not, ReadOnly is fine
-class AssessmentWeightsViewSet(JSONListOnly):
+# Assessment Weights
+class AssessmentWeightsViewSet(ReadOnly):
     queryset = models.AssessmentWeights.objects.all()
     serializer_class = AssessmentWeightsSerializer
+    lookup_field = "enrollment_id"   # adjust to the correct PK field
