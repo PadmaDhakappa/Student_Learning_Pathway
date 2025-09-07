@@ -19,12 +19,9 @@ router.register(r'assessment_weights', AssessmentWeightsViewSet, basename='asses
 urlpatterns = [
     path('', include(router.urls)),
 
+    # Enrollment-filtered routes
     path('subjects/<path:enrollment_id>/', SubjectsViewSet.as_view({'get': 'list'})),
     path('assessments_fa/<path:enrollment_id>/', AssessmentsFaViewSet.as_view({'get': 'list'})),
     path('assessments_eol/<path:enrollment_id>/', AssessmentsEolViewSet.as_view({'get': 'list'})),
     path('assessments_sa/<path:enrollment_id>/', AssessmentsSaViewSet.as_view({'get': 'list'})),
-    path('assessment_weights/<path:enrollment_id>/', AssessmentWeightsViewSet.as_view({'get': 'list'})),
 ]
-
-
-
