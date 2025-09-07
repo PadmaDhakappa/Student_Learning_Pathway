@@ -33,5 +33,5 @@ class SubjectsSerializer(serializers.ModelSerializer):
 
 class AssessmentWeightsSerializer(serializers.ModelSerializer):
     class Meta:
-        model = models.AssessmentWeights   # match the exact class name from inspectdb
+        model = models.AssessmentWeights
         fields = "__all__"
