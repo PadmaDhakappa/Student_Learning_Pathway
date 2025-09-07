@@ -1,5 +1,6 @@
-from rest_framework import viewsets, permissions, filters, mixins
+from rest_framework import viewsets, permissions, filters
 from rest_framework.renderers import JSONRenderer
+from rest_framework.response import Response
 from . import models
 from .serializers import (
     UsersSerializer, EnrollmentsSerializer, AssessmentsEolSerializer,
@@ -7,60 +8,77 @@ from .serializers import (
     SubjectsSerializer, AssessmentWeightsSerializer
 )
 
-class JSONListOnly(mixins.ListModelMixin, viewsets.GenericViewSet):
-    permission_classes = [permissions.AllowAny]
-    renderer_classes = [JSONRenderer]
-    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-
+# ----------------------
+# Base Classes
+# ----------------------
 class ReadOnly(viewsets.ReadOnlyModelViewSet):
+    """Read-only with search & ordering"""
     permission_classes = [permissions.AllowAny]
     renderer_classes = [JSONRenderer]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
 
-# Safe users (from view)
+
+class EnrollmentFilteredViewSet(ReadOnly):
+    """
+    Supports both:
+      /api/<table>/                 -> all rows
+      /api/<table>/<enrollment_id>/ -> rows filtered by enrollment_id
+    """
+    enrollment_field = "enrollment__enrollment_id"
+
+    def list(self, request, *args, **kwargs):
+        enrollment_id = kwargs.get("enrollment_id")
+        if enrollment_id:
+            queryset = self.queryset.filter(**{self.enrollment_field: enrollment_id})
+        else:
+            queryset = self.queryset.all()
+
+        if not queryset.exists():
+            return Response([], status=200)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+
+# ----------------------
+# ViewSets
+# ----------------------
 class UsersViewSet(ReadOnly):
     queryset = models.UsersPublic.objects.all()
     serializer_class = UsersSerializer
     search_fields = ["email", "username"]
     ordering_fields = ["created_at", "email"]
-    
-# Single-PK table → ok to keep full read-only
+
+
 class EnrollmentsViewSet(ReadOnly):
     queryset = models.Enrollments.objects.all()
     serializer_class = EnrollmentsSerializer
-    lookup_field = "enrollment_id"    # stable detail routes
-    lookup_value_regex = r"[^/]+" 
+    lookup_field = "enrollment_id"    # real PK
+    lookup_value_regex = r"[^/]+"
 
-# Assessments (fetch all + individual by enrollment_id)
-class AssessmentsFaViewSet(ReadOnly):
+
+# Filtered by enrollment_id (FK → enrollment)
+class AssessmentsFaViewSet(EnrollmentFilteredViewSet):
     queryset = models.AssessmentsFa.objects.all()
     serializer_class = AssessmentsFaSerializer
-    lookup_field = "enrollment_id"
-    lookup_value_regex = r"[^/]+" 
 
-class AssessmentsEolViewSet(ReadOnly):
+
+class AssessmentsEolViewSet(EnrollmentFilteredViewSet):
     queryset = models.AssessmentsEol.objects.all()
     serializer_class = AssessmentsEolSerializer
-    lookup_field = "enrollment_id"
-    lookup_value_regex = r"[^/]+" 
 
-class AssessmentsSaViewSet(ReadOnly):
+
+class AssessmentsSaViewSet(EnrollmentFilteredViewSet):
     queryset = models.AssessmentsSa.objects.all()
     serializer_class = AssessmentsSaSerializer
-    lookup_field = "enrollment_id"
-    lookup_value_regex = r"[^/]+" 
 
-# Subjects (list + detail if single PK exists)
-class SubjectsViewSet(ReadOnly):
+
+class SubjectsViewSet(EnrollmentFilteredViewSet):
     queryset = models.Subjects.objects.all()
     serializer_class = SubjectsSerializer
-    lookup_field = "subject_id" 
-    lookup_value_regex = r"[^/]+" # adjust if your model has a different PK
 
-# Assessment Weights
+
+# Assessment Weights (no enrollment FK, just keep simple read-only)
 class AssessmentWeightsViewSet(ReadOnly):
     queryset = models.AssessmentWeights.objects.all()
     serializer_class = AssessmentWeightsSerializer
-    lookup_field = "enrollment_id"
-    lookup_value_regex = r"[^/]+"
- 
